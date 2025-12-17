@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Health Insurance Claim System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body {
+    background: url('https://www.smartcommunications.com/wp-content/uploads/Claims_HC-Payer_FeaturedImage-WP-1200x628-1.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+}
+
+/* Make forms and tables stand out with semi-transparent background */
+section, table {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+</style>
+</head>
+<body>
+
+<header class="bg-blue-600 text-white text-center p-4 text-2xl font-bold">Smart Health Insurance Claim System</header>
+
+<!-- REGISTER PAGE -->
+<section id="registerPage" class="max-w-md mx-auto mt-10 p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold mb-4 text-center">Create Account</h2>
+    <input id="regName" type="text" placeholder="Full Name" class="w-full p-2 mb-3 border rounded">
+    <input id="regEmail" type="email" placeholder="Email" class="w-full p-2 mb-3 border rounded">
+    <input id="regPassword" type="password" placeholder="Password" class="w-full p-2 mb-3 border rounded">
+    <p id="regMsg" class="text-sm mb-3 hidden"></p>
+    <button onclick="register()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Register</button>
+    <p class="text-center mt-3 text-sm">Already have an account? <span onclick="showLogin()" class="text-blue-600 cursor-pointer">Login</span></p>
+</section>
+
+<!-- LOGIN PAGE -->
+<section id="loginPage" class="max-w-md mx-auto mt-10 p-6 rounded-lg shadow hidden">
+    <h2 class="text-xl font-semibold mb-4 text-center">Login</h2>
+    <input id="loginEmail" type="email" placeholder="Email" class="w-full p-2 mb-3 border rounded">
+    <input id="loginPassword" type="password" placeholder="Password" class="w-full p-2 mb-3 border rounded">
+    <p id="loginMsg" class="text-red-600 text-sm mb-3 hidden"></p>
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+    <p class="text-center mt-3 text-sm">New user? <span onclick="showRegister()" class="text-blue-600 cursor-pointer">Register</span></p>
+</section>
+
+<!-- USER MAIN SYSTEM -->
+<div id="mainSystem" class="hidden">
+
+<section id="claimFormSection" class="max-w-2xl mx-auto mt-10 p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold mb-4">Submit Insurance Claim</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input id="patientName" type="text" placeholder="Patient Name" class="p-2 border rounded">
+        <input id="policyNumber" type="text" placeholder="Policy Number" class="p-2 border rounded">
+        <input id="hospitalName" type="text" placeholder="Hospital Name" class="p-2 border rounded">
+        <input id="claimAmount" type="number" placeholder="Claim Amount" class="p-2 border rounded">
+        <input id="claimDate" type="date" class="p-2 border rounded">
+    </div>
+    <textarea id="description" placeholder="Medical Description" class="w-full mt-4 p-2 border rounded"></textarea>
+    <button onclick="submitClaim()" class="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Submit Claim</button>
+    <button onclick="logoutUser()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+</section>
+
+<section id="thankYouSection" class="max-w-2xl mx-auto mt-10 p-6 rounded-lg shadow text-center hidden">
+    <h2 class="text-2xl font-bold mb-4 text-green-600">Thank You!</h2>
+    <p class="mb-6">Your insurance claim has been submitted successfully.</p>
+    <button onclick="goBack()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Back</button>
+</section>
+
+<!-- USER SUBMITTED CLAIMS SECTION -->
+<section id="claimsSection" class="max-w-3xl mx-auto mt-10 p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold mb-4">Submitted Claims</h2>
+    <div id="allClaimsTables"></div>
+</section>
+</div>
+
+<!-- ADMIN PORTAL -->
+<section id="adminPortal" class="hidden max-w-4xl mx-auto mt-10 p-6 rounded-lg shadow">
+    <h2 class="text-2xl font-bold mb-4 text-red-600">Admin Portal</h2>
+    <button onclick="logoutAdmin()" class="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+    <table class="w-full border-collapse border">
+        <thead class="bg-gray-200">
+            <tr>
+                <th class="border px-2 py-1">ID</th>
+                <th class="border px-2 py-1">Patient Name</th>
+                <th class="border px-2 py-1">Policy Number</th>
+                <th class="border px-2 py-1">Hospital</th>
+                <th class="border px-2 py-1">Amount</th>
+                <th class="border px-2 py-1">Status</th>
+                <th class="border px-2 py-1">Fraud Risk</th>
+                <th class="border px-2 py-1">Action</th>
+            </tr>
+        </thead>
+        <tbody id="adminTableBody"></tbody>
+    </table>
+</section>
+
+<script>
+// GLOBAL
+let currentUserEmail = "";
+
+// SHOW PAGES
+function showLogin() { document.getElementById("registerPage").classList.add("hidden"); document.getElementById("loginPage").classList.remove("hidden"); }
+function showRegister() { document.getElementById("loginPage").classList.add("hidden"); document.getElementById("registerPage").classList.remove("hidden"); }
+
+// REGISTER
+function register() {
+    const name = document.getElementById("regName").value;
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+    const msg = document.getElementById("regMsg");
+    if(!name||!email||!password){ msg.textContent="All fields required"; msg.classList.remove("hidden"); return; }
+    let users = JSON.parse(localStorage.getItem("users"))||[];
+    if(users.find(u=>u.email===email)){ msg.textContent="Email already registered"; msg.classList.remove("hidden"); return; }
+    users.push({name,email,password});
+    localStorage.setItem("users",JSON.stringify(users));
+    msg.textContent="Registration successful! Please login."; msg.className="text-green-600 text-sm mb-3"; msg.classList.remove("hidden");
+    setTimeout(showLogin,1000);
+}
+
+// LOGIN
+function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    // Admin check
+    if(email==="admin@gmail.com" && password==="12345"){
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("adminPortal").classList.remove("hidden");
+        renderAdminTable();
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem("users"))||[];
+    const valid = users.find(u=>u.email===email && u.password===password);
+    if(valid){
+        currentUserEmail = email;
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("mainSystem").classList.remove("hidden");
+        renderUserTable();
+    } else { alert("Invalid credentials"); }
+}
+
+// SIMPLE FRAUD DETECTION
+function detectFraud(claim) {
+    let risk = "Low";
+    if(claim.claimAmount > 10000) risk = "High";
+    if(claim.hospitalName.toLowerCase().includes("private")) risk = "High";
+    return risk;
+}
+
+// SUBMIT CLAIM
+function submitClaim(){
+    const patientName=document.getElementById("patientName").value;
+    const policyNumber=document.getElementById("policyNumber").value;
+    const hospitalName=document.getElementById("hospitalName").value;
+    const claimAmount=document.getElementById("claimAmount").value;
+    const claimDate=document.getElementById("claimDate").value;
+    const description=document.getElementById("description").value;
+
+    if(!patientName||!policyNumber||!hospitalName||!claimAmount||!claimDate){ alert("Fill all fields"); return; }
+
+    let claims = JSON.parse(localStorage.getItem("claims"))||[];
+    const fraudRisk = detectFraud({claimAmount, hospitalName});
+
+    claims.push({
+        id:"CLM-"+(claims.length+1),
+        patientName,
+        policyNumber,
+        hospitalName,
+        claimAmount,
+        claimDate,
+        description,
+        status:"Submitted",
+        fraudRisk: fraudRisk,
+        userEmail: currentUserEmail
+    });
+
+    localStorage.setItem("claims",JSON.stringify(claims));
+    document.getElementById("claimFormSection").classList.add("hidden");
+    document.getElementById("thankYouSection").classList.remove("hidden");
+    renderUserTable();
+
+    document.getElementById("patientName").value="";
+    document.getElementById("policyNumber").value="";
+    document.getElementById("hospitalName").value="";
+    document.getElementById("claimAmount").value="";
+    document.getElementById("claimDate").value="";
+    document.getElementById("description").value="";
+}
+
+// BACK BUTTON
+function goBack(){ document.getElementById("thankYouSection").classList.add("hidden"); document.getElementById("claimFormSection").classList.remove("hidden"); }
+
+// LOGOUT
+function logoutUser(){ currentUserEmail=""; document.getElementById("mainSystem").classList.add("hidden"); document.getElementById("loginPage").classList.remove("hidden"); }
+function logoutAdmin(){ document.getElementById("adminPortal").classList.add("hidden"); document.getElementById("loginPage").classList.remove("hidden"); }
+
+// RENDER USER TABLE
+function renderUserTable(){
+    const claims = JSON.parse(localStorage.getItem("claims")) || [];
+    const container = document.getElementById("allClaimsTables");
+    container.innerHTML = "";
+
+    const userClaims = claims.filter(c => c.userEmail === currentUserEmail);
+    userClaims.forEach((c) => {
+        const table = document.createElement("table");
+        table.className = "w-full border-collapse border mb-6";
+        table.innerHTML = `
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border px-2 py-1">ID</th>
+                    <th class="border px-2 py-1">Patient Name</th>
+                    <th class="border px-2 py-1">Policy Number</th>
+                    <th class="border px-2 py-1">Hospital</th>
+                    <th class="border px-2 py-1">Amount</th>
+                    <th class="border px-2 py-1">Date</th>
+                    <th class="border px-2 py-1">Description</th>
+                    <th class="border px-2 py-1">Status</th>
+                    <th class="border px-2 py-1">Fraud Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border px-2 py-1">${c.id}</td>
+                    <td class="border px-2 py-1">${c.patientName}</td>
+                    <td class="border px-2 py-1">${c.policyNumber}</td>
+                    <td class="border px-2 py-1">${c.hospitalName}</td>
+                    <td class="border px-2 py-1">${c.claimAmount}</td>
+                    <td class="border px-2 py-1">${c.claimDate}</td>
+                    <td class="border px-2 py-1">${c.description}</td>
+                    <td class="border px-2 py-1">${c.status}</td>
+                    <td class="border px-2 py-1">${c.fraudRisk}</td>
+                </tr>
+            </tbody>
+        `;
+        container.appendChild(table);
+    });
+}
+
+// RENDER ADMIN TABLE WITH DELETE BUTTON
+function renderAdminTable() {
+    const claims = JSON.parse(localStorage.getItem("claims")) || [];
+    const tbody = document.getElementById("adminTableBody");
+    tbody.innerHTML = "";
+
+    claims.forEach((c, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td class="border px-2 py-1">${c.id}</td>
+            <td class="border px-2 py-1">${c.patientName}</td>
+            <td class="border px-2 py-1">${c.policyNumber}</td>
+            <td class="border px-2 py-1">${c.hospitalName}</td>
+            <td class="border px-2 py-1">${c.claimAmount}</td>
+            <td class="border px-2 py-1">${c.status}</td>
+            <td class="border px-2 py-1">${c.fraudRisk}</td>
+            <td class="border px-2 py-1 flex gap-2">
+                <button onclick="markDone(${index})" class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">Claim Done</button>
+                <button onclick="deleteClaim(${index})" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ADMIN MARK DONE
+function markDone(index){
+    const claims=JSON.parse(localStorage.getItem("claims"))||[];
+    claims[index].status="Done"; claims[index].fraudRisk="Checked";
+    localStorage.setItem("claims",JSON.stringify(claims));
+    renderAdminTable();
+    renderUserTable();
+}
+
+// ADMIN DELETE CLAIM
+function deleteClaim(index) {
+    if (confirm("Are you sure you want to delete this claim?")) {
+        let claims = JSON.parse(localStorage.getItem("claims")) || [];
+        claims.splice(index, 1); // Remove the claim at the given index
+        localStorage.setItem("claims", JSON.stringify(claims));
+        renderAdminTable(); // Refresh admin table
+        renderUserTable();  // Refresh user table as well
+    }
+}
+</script>
+
+</body>
+</html>
